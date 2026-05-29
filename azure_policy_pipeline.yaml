@@ -1,0 +1,59 @@
+trigger:
+- main
+- dev
+
+pool:
+  name: myvm
+
+steps:
+- checkout: self
+
+# Install Terraform
+- task: TerraformInstaller@1
+  inputs:
+    terraformVersion: '1.5.0'
+
+# ✅ INIT using TerraformTask (handles backend auth)
+- task: TerraformTaskV4@4
+  displayName: Terraform Init
+  inputs:
+    provider: 'azurerm'
+    command: 'init'
+    backendServiceArm: 'azure-policy-group-defenition'
+    backendAzureRmResourceGroupName: 'Ganesh-RG'
+    backendAzureRmStorageAccountName: 'tfstatebackend1808'
+    backendAzureRmContainerName: 'tfstate'
+    backendAzureRmKey: 'terraform.tfstate'
+
+# - task: CmdLine@2
+#   displayName: 'Terraform Unlock'
+#   inputs:
+#     script: |
+#       cd $(Build.SourcesDirectory)
+#       terraform init
+#       terraform force-unlock -force 3d9e0902-1888-8b11-0c01-577f76c246c7
+
+# ✅ PLAN using TerraformTask
+- task: TerraformTaskV4@4
+  displayName: Terraform Plan
+  inputs:
+    provider: 'azurerm'
+    command: 'plan'
+    environmentServiceNameAzureRM: 'azure-policy-group-defenition'
+    
+# ✅ Apply using TerraformTask   
+- task: TerraformTaskV4@4
+  displayName: Terraform Apply
+  inputs:
+    provider: 'azurerm'
+    command: 'apply'
+    environmentServiceNameAzureRM: 'azure-policy-group-defenition'
+    args: '-auto-approve'
+
+# - task: TerraformTaskV4@4
+#   displayName: Terraform Destroy
+#   inputs:
+#     provider: 'azurerm'
+#     command: 'destroy'
+#     environmentServiceNameAzureRM: 'azure-policy-group-defenition'
+#     args: '-auto-approve'
